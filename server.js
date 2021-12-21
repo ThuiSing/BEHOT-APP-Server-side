@@ -22,6 +22,7 @@ async function run() {
     const database = client.db("Hoodies-Shop");
     const HoodiesCollection = database.collection("Hoodies");
     const orderedItems = database.collection("OrderedItems");
+    const reviewsCollection = database.collection("Reviews");
 
     app.get("/hoodies", async (req, res) => {
       const result = await HoodiesCollection.find({}).toArray();
@@ -43,7 +44,7 @@ async function run() {
       const alReadyHave = allItems.find((pro) => pro._id === item._id);
       let newItem = {};
       if (alReadyHave) {
-        alReadyHave["quantity"] += 1;
+        alReadyHave["quantity"] += item.quantity ? item.quantity : 1;
         newItem = alReadyHave;
       } else {
         item["quantity"] = 1;
@@ -58,7 +59,6 @@ async function run() {
     });
     app.get("/orderedItems/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
       const query = { email: email };
 
       const result = await orderedItems.find(query).toArray();
@@ -68,6 +68,18 @@ async function run() {
       const id = req.params.id;
       const query = { _id: id };
       const result = await orderedItems.deleteOne(query);
+      res.json(result);
+    });
+    app.get("/reviews", async (req, res) => {
+      const result = await reviewsCollection.find({}).toArray();
+      res.send(result);
+    });
+    app.post("/reviews", async (req, res) => {
+      const doc = req.body;
+      console.log("cliked");
+      const result = await reviewsCollection.insertOne(doc);
+      console.log("cliked2");
+
       res.json(result);
     });
   } finally {
