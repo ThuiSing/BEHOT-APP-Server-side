@@ -18,11 +18,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    console.log("connected");
     const database = client.db("Hoodies-Shop");
     const HoodiesCollection = database.collection("Hoodies");
     const orderedItems = database.collection("OrderedItems");
     const reviewsCollection = database.collection("Reviews");
+    const usersCollection = database.collection("Users");
 
     app.get("/hoodies", async (req, res) => {
       const result = await HoodiesCollection.find({}).toArray();
@@ -34,8 +34,12 @@ async function run() {
       const result = await HoodiesCollection.findOne(query);
       res.send(result);
     });
+    app.post("/hoodies", async (req, res) => {
+      const doc = req.body;
+      const result = await HoodiesCollection.insertOne(doc);
+      res.json(result);
+    });
     app.post("/orderedItems", async (req, res) => {
-      // console.log(req.body);
       const item = req.body;
       const filter = { _id: item._id };
       const options = { upsert: true };
@@ -76,10 +80,25 @@ async function run() {
     });
     app.post("/reviews", async (req, res) => {
       const doc = req.body;
-      console.log("cliked");
       const result = await reviewsCollection.insertOne(doc);
-      console.log("cliked2");
 
+      res.json(result);
+    });
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const user = await usersCollection.findOne(filter);
+      let isAdmin;
+      if (user?.role === "admin") {
+        isAdmin = true;
+      } else {
+        isAdmin = false;
+      }
+      res.json({ isAdmin: isAdmin });
+    });
+    app.post("/users", async (req, res) => {
+      const doc = req.body;
+      const result = await usersCollection.insertOne(doc);
       res.json(result);
     });
   } finally {
